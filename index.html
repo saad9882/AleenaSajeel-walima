@@ -1027,30 +1027,36 @@ function fire() {
   progressWrap.classList.add('hide');
   video.classList.add('zooming');
 
-  // ── Step 1: fade bloom IN (cover screen) ──────────────────
-  // Small delay so the zoom animation has started visually
-  setTimeout(() => {
-    bloom.classList.add('active');   // enable pointer-events
-    bloom.style.transition = 'opacity 0.55s ease-in-out';
-    bloom.style.opacity    = '1';
-  }, 280);
+  // ── Step 1: Fade bloom IN to cover the entire screen ──────
+  bloom.style.pointerEvents = 'all';
+  bloom.style.transition    = 'opacity 0.5s ease-in-out';
+  bloom.style.opacity       = '1';
 
-  // ── Step 2: reveal mainSite, then fade bloom OUT ──────────
-  // Wait for bloom to fully cover (280 + 550 = 830 ms)
+  // ── Step 2: Once bloom is FULLY opaque (500 ms), snap      
+  //    mainSite to opacity:1 instantly beneath it, then fade  
+  //    bloom OUT — revealing the already-visible site.        
   setTimeout(() => {
-    mainSite.style.opacity = '1';          // site is visible under bloom
-    bloom.style.transition  = 'opacity 0.85s ease-in-out';
-    bloom.style.opacity     = '0';         // bloom fades away → site revealed
-    setTimeout(() => {
-      bloom.classList.remove('active');    // restore pointer-events:none
-    }, 850);
-  }, 830);
+    // Remove the slow 1.4 s transition and snap site visible  
+    // while it is safely hidden behind the opaque bloom.      
+    mainSite.style.transition = 'none';
+    mainSite.style.opacity    = '1';
 
-  // ── Step 3: fully remove splash from DOM flow ─────────────
-  // Wait until bloom has finished fading out (830 + 850 = 1680 ms)
+    // Double rAF ensures the opacity:1 paint is committed      
+    // before we start fading bloom away.                       
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      bloom.style.transition = 'opacity 0.9s ease-in-out';
+      bloom.style.opacity    = '0';
+    }));
+  }, 520); // 20 ms buffer past the 500 ms fade-in
+
+  // ── Step 3: After bloom finishes fading out, kill it dead   
+  //    and remove the splash overlay entirely.                 
+  // 520 + 900 (fade-out) + 80 (buffer) = 1500 ms
   setTimeout(() => {
+    bloom.style.display    = 'none';      // guarantee it is gone
+    bloom.style.pointerEvents = 'none';
     splash.classList.add('gone');
-  }, 1680);
+  }, 1500);
 }
 
 // Bind video events
