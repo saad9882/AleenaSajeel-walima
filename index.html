@@ -31,7 +31,7 @@
   --ease-bloom:  cubic-bezier(0.16,1,0.3,1);
   --ease-in-out: cubic-bezier(0.4,0,0.2,1);
 }
-/*tatantqanantantant/*
+
 /* ── RESET ──────────────────────────────────────────────────── */
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 html{scroll-behavior:smooth;overflow-x:hidden;}
@@ -40,7 +40,7 @@ body{
   color:var(--text-main);
   font-family:'EB Garamond',serif;
   overflow-x:hidden;
-  cursor:none; /* custom cursor */
+  cursor:none;
 }
 
 /* ── CUSTOM CURSOR ──────────────────────────────────────────── */
@@ -71,7 +71,6 @@ body:hover #cursor { opacity:1; }
 .gold{ color:var(--gold); }
 .italic{ font-style:italic; }
 
-/* Scroll-reveal base state */
 .reveal{
   opacity:0;
   transform:translateY(28px);
@@ -94,7 +93,6 @@ body:hover #cursor { opacity:1; }
 }
 .reveal-right.in{ opacity:1; transform:translateX(0); }
 
-/* Stagger helpers */
 .d1{transition-delay:0.1s!important;}
 .d2{transition-delay:0.25s!important;}
 .d3{transition-delay:0.4s!important;}
@@ -102,7 +100,6 @@ body:hover #cursor { opacity:1; }
 .d5{transition-delay:0.7s!important;}
 .d6{transition-delay:0.9s!important;}
 
-/* ── SECTION SHARED ─────────────────────────────────────────── */
 section{
   position:relative;
   padding:clamp(80px,10vw,130px) clamp(24px,6vw,80px);
@@ -166,15 +163,20 @@ section{
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   1. SPLASH SCREEN
+   1. SPLASH SCREEN  — FIXED
 ═══════════════════════════════════════════════════════════════ */
 #splash{
   position:fixed;inset:0;
   z-index:9000;
   background:#000;
+  /* FIX: use visibility + opacity together so it truly disappears */
   transition:opacity 0.7s var(--ease-lux), visibility 0.7s var(--ease-lux);
 }
-#splash.gone{opacity:0;visibility:hidden;pointer-events:none;}
+#splash.gone{
+  opacity:0;
+  visibility:hidden;
+  pointer-events:none;
+}
 
 #envVideo{
   position:absolute;inset:0;
@@ -204,42 +206,24 @@ section{
 }
 @keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
 
-/* --- Standard Elegant Fade Transition --- */
+/* ── BLOOM OVERLAY — FIXED ──────────────────────────────────
+   Single element. No animation classes — we drive opacity
+   purely via JS + CSS transition so there is no class-swap
+   flash. The transition handles both fade-in and fade-out.
+─────────────────────────────────────────────────────────── */
 #bloom {
   position: absolute;
   inset: 0;
   z-index: 10;
-  pointer-events: none; /* Lets clicks pass through when hidden */
+  pointer-events: none;
   opacity: 0;
-  
-  /* A solid, deep navy blue (or use #000000 for pure black) */
-  background-color: #0a1930; 
+  background-color: #0a1930;
+  /* One transition covers both directions */
+  transition: opacity 0.6s ease-in-out;
 }
-
-/* Phase 1: Fading In (Covering the screen) */
-#bloom.expand {
-  /* Using standard ease-in-out for a natural feel */
-  animation: simpleFadeIn 0.6s ease-in-out forwards;
-  pointer-events: all; /* Blocks accidental clicks while screen is covered */
-}
-
-@keyframes simpleFadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-/* Phase 2: Fading Out (Revealing the new content) */
-#bloom.fade {
-  opacity: 1;
-  animation: simpleFadeOut 0.8s ease-in-out forwards;
-}
-
-@keyframes simpleFadeOut {
-  from { opacity: 1; }
-  to { 
-    opacity: 0; 
-    visibility: hidden; /* Ensures it is completely removed from view */
-  }
+/* When JS sets opacity=1 we want it to block clicks */
+#bloom.active {
+  pointer-events: all;
 }
 
 /* Splash corners */
@@ -302,13 +286,11 @@ section{
   background:var(--ink);
 }
 
-/* Star field canvas */
 #starCanvas{
   position:absolute;inset:0;
   pointer-events:none;opacity:0.55;
 }
 
-/* Radial glow behind names */
 #hero::before{
   content:'';position:absolute;
   inset:0;
@@ -393,7 +375,6 @@ section{
   to{opacity:1;transform:translateY(0);}
 }
 
-/* Mughal geometric hero ornament */
 .hero-ornament{
   position:absolute;
   opacity:0.04;pointer-events:none;
@@ -456,7 +437,6 @@ section{
   color:var(--text-muted);
 }
 
-/* Mobile: stack story grid */
 @media(max-width:600px){
   .story-grid{grid-template-columns:1fr;gap:24px 0;}
   .story-vline{display:none;}
@@ -488,7 +468,6 @@ section{
   background:rgba(201,168,76,0.04);
   transform:translateY(-4px);
 }
-/* Corner accents on card */
 .detail-card::before,.detail-card::after{
   content:'';position:absolute;
   width:14px;height:14px;
@@ -604,103 +583,7 @@ section{
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   7. RSVP
-═══════════════════════════════════════════════════════════════ */
-#rsvp{
-  background:var(--ink);
-}
-.rsvp-wrap{
-  max-width:540px;margin:clamp(36px,5vw,64px) auto 0;
-}
-.rsvp-form{display:flex;flex-direction:column;gap:20px;}
-
-.field-group{display:flex;flex-direction:column;gap:8px;}
-.field-label{
-  font-family:'Cinzel',serif;font-size:clamp(8px,1vw,10px);
-  letter-spacing:0.38em;color:var(--gold);opacity:0.65;text-transform:uppercase;
-}
-.field-input,.field-select,.field-textarea{
-  width:100%;
-  background:rgba(255,255,255,0.03);
-  border:none;border-bottom:1px solid var(--gold-dim);
-  padding:12px 4px;
-  font-family:'Cormorant Garamond',serif;font-size:clamp(15px,1.8vw,18px);
-  color:var(--cream);
-  outline:none;
-  transition:border-color 0.3s ease;
-  -webkit-appearance:none;appearance:none;
-  border-radius:0;
-}
-.field-select{cursor:pointer;}
-.field-input::placeholder,.field-textarea::placeholder{color:var(--text-muted);}
-.field-input:focus,.field-select:focus,.field-textarea:focus{border-bottom-color:var(--gold);}
-.field-textarea{resize:vertical;min-height:80px;border:1px solid var(--gold-dim);padding:12px;background:rgba(255,255,255,0.03);}
-.field-textarea:focus{border-color:var(--gold);}
-.field-select option{background:var(--ink-mid);color:var(--cream);}
-
-.rsvp-radio-group{display:flex;gap:16px;flex-wrap:wrap;}
-.rsvp-radio{
-  display:flex;align-items:center;gap:8px;cursor:pointer;
-}
-.rsvp-radio input{display:none;}
-.rsvp-radio-box{
-  width:16px;height:16px;
-  border:1px solid var(--gold-dim);
-  position:relative;flex-shrink:0;
-  transition:border-color 0.3s ease;
-}
-.rsvp-radio input:checked ~ .rsvp-radio-box{border-color:var(--gold);}
-.rsvp-radio input:checked ~ .rsvp-radio-box::after{
-  content:'';position:absolute;
-  inset:3px;background:var(--gold);
-}
-.rsvp-radio-text{
-  font-family:'Cormorant Garamond',serif;font-style:italic;
-  font-size:clamp(15px,1.8vw,18px);color:var(--cream);
-}
-
-.rsvp-btn{
-  margin-top:8px;
-  padding:16px 40px;
-  background:transparent;
-  border:1px solid var(--gold);
-  font-family:'Cinzel',serif;font-size:clamp(9px,1.1vw,12px);
-  letter-spacing:0.42em;color:var(--gold);text-transform:uppercase;
-  cursor:pointer;
-  position:relative;overflow:hidden;
-  transition:color 0.4s ease, background 0.4s ease;
-  align-self:center;
-}
-.rsvp-btn::before{
-  content:'';position:absolute;
-  inset:0;background:var(--gold);
-  transform:scaleX(0);transform-origin:left;
-  transition:transform 0.4s var(--ease-lux);
-  z-index:0;
-}
-.rsvp-btn:hover{color:var(--ink);}
-.rsvp-btn:hover::before{transform:scaleX(1);}
-.rsvp-btn span{position:relative;z-index:1;}
-
-.rsvp-success{
-  display:none;text-align:center;
-  padding:clamp(24px,4vw,40px);
-  border:1px solid var(--gold-dim);
-}
-.rsvp-success.show{display:block;}
-.rsvp-success-icon{
-  font-family:'Cormorant Garamond',serif;font-style:italic;
-  font-size:clamp(40px,7vw,70px);
-  color:var(--gold);margin-bottom:16px;
-}
-.rsvp-success p{
-  font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:300;
-  font-size:clamp(16px,2.2vw,22px);
-  color:var(--cream);line-height:1.7;
-}
-
-/* ═══════════════════════════════════════════════════════════════
-   8. FOOTER
+   7. FOOTER
 ═══════════════════════════════════════════════════════════════ */
 footer{
   background:var(--ink);
@@ -751,9 +634,6 @@ footer::before{
 ::-webkit-scrollbar-track{background:var(--ink);}
 ::-webkit-scrollbar-thumb{background:var(--gold-dim);border-radius:2px;}
 
-/* ═══════════════════════════════════════════════════════════════
-   RESPONSIVE
-═══════════════════════════════════════════════════════════════ */
 @media(max-width:480px){
   .detail-card::before,.detail-card::after{display:none;}
   .venue-map-wrap{aspect-ratio:4/3;}
@@ -766,19 +646,22 @@ footer::before{
 <audio id="bgMusic" loop>
   <source src="./backgroundm.MP3" type="audio/mpeg">
 </audio>
+
 <!-- ── CUSTOM CURSOR ───────────────────────────────────────── -->
 <div id="cursor"></div>
 <div id="cursor-ring"></div>
 
 <!-- ═══════════════════════════════════════════════════════════
-     SPLASH
+     SPLASH  — FIXED: single #bloom, no duplicate divs
 ═══════════════════════════════════════════════════════════════ -->
 <div id="splash">
   <div id="loader"><div class="loader-ring"></div></div>
 
- <video id="envVideo" muted playsinline preload="auto" src="./splash.MP4"></video>
-<div id="bloom"></div>
+  <video id="envVideo" muted playsinline preload="auto" src="./splash.MP4"></video>
+
+  <!-- FIX: only ONE #bloom element (was duplicated before) -->
   <div id="bloom"></div>
+
   <div class="splash-frame"></div>
 
   <!-- Corners -->
@@ -802,7 +685,6 @@ footer::before{
 <section id="hero">
   <canvas id="starCanvas"></canvas>
 
-  <!-- Mughal geometric ornament SVGs -->
   <div class="hero-ornament top-left">
     <svg viewBox="0 0 300 300" fill="none" xmlns="http://www.w3.org/2000/svg">
       <polygon points="150,10 185,90 275,90 210,145 235,225 150,175 65,225 90,145 25,90 115,90" stroke="#c9a84c" stroke-width="1" fill="none"/>
@@ -819,13 +701,12 @@ footer::before{
     </svg>
   </div>
 
-  <p class="hero-eyebrow">We cordially invite you at the wedding ceremony of </p>
+  <p class="hero-eyebrow">We cordially invite you at the wedding ceremony of</p>
   <h1 class="hero-monogram">S <span style="font-size:0.55em;vertical-align:middle;color:#e8c96e;">&amp;</span> A</h1>
   <p class="hero-names">Sajeel Wasti <span class="amp">&amp;</span> Aleena Ammad</p>
   <div class="hero-divider"></div>
   <p class="hero-date">Saturday · 4th April 2026</p>
-  <p class="hero-location">7-PM &nbsp;·&nbsp; Multan Garrison
-Mess Banquet</p>
+  <p class="hero-location">7-PM &nbsp;·&nbsp; Multan Garrison Mess Banquet</p>
 
   <div class="hero-scroll" onclick="document.getElementById('story').scrollIntoView({behavior:'smooth'})">
     <span>Scroll</span>
@@ -851,13 +732,13 @@ Mess Banquet</p>
     <div class="story-card reveal-left d2">
       <p class="story-card-label">The Groom</p>
       <p class="story-card-name">Sajeel<br/>Wasti</p>
-      <p class="story-card-sub">Son of the Aliya and Moshsin Wasti ,<br/>beloved, honoured, cherished.</p>
+      <p class="story-card-sub">Son of Aliya and Mohsin Wasti,<br/>beloved, honoured, cherished.</p>
     </div>
     <div class="story-vline reveal d3"></div>
     <div class="story-card reveal-right d2">
       <p class="story-card-label">The Bride</p>
       <p class="story-card-name">Aleena<br/>Ammad</p>
-      <p class="story-card-sub">Daughter of the Asmara and Ammad Hussain<br/>graceful, radiant, treasured.</p>
+      <p class="story-card-sub">Daughter of Asmara and Ammad Hussain,<br/>graceful, radiant, treasured.</p>
     </div>
   </div>
 
@@ -867,7 +748,8 @@ Mess Banquet</p>
   </div>
 </section>
 
-<<section id="details">
+<!-- FIX: was "<<section" (double angle bracket), now correct "<section" -->
+<section id="details">
   <div class="reveal d1">
     <div class="ornament-row">
       <div class="ornament-line"></div>
@@ -910,7 +792,7 @@ Mess Banquet</p>
         </svg>
       </div>
       <p class="detail-card-label">Time</p>
-      <p class="detail-card-value">7 PM<br/></p>
+      <p class="detail-card-value">7 PM</p>
       <p class="detail-card-sub">Doors open at dusk</p>
     </div>
 
@@ -925,9 +807,6 @@ Mess Banquet</p>
       <p class="detail-card-value">Multan Garrison<br/>Mess Banquet</p>
       <p class="detail-card-sub">Multan Cantonment<br/>Multan, Pakistan</p>
     </div>
-
-    <div class="detail-card" style="visibility: hidden; pointer-events: none;"></div>
-    
   </div>
 </section>
 
@@ -966,8 +845,6 @@ Mess Banquet</p>
       <span class="cd-label">Seconds</span>
     </div>
   </div>
-
-
 </section>
 
 <!-- ── 5. VENUE ─────────────────────────────────────────────── -->
@@ -1013,8 +890,6 @@ Mess Banquet</p>
   </div>
 </section>
 
-
-
 <!-- ── 7. FOOTER ────────────────────────────────────────────── -->
 <footer>
   <div class="reveal d1">
@@ -1040,7 +915,6 @@ Mess Banquet</p>
 /* ════════════════════════════════════════════════════════════
    CUSTOM CURSOR
 ════════════════════════════════════════════════════════════ */
-
 const cur  = document.getElementById('cursor');
 const ring = document.getElementById('cursor-ring');
 let mx=0,my=0,rx=0,ry=0;
@@ -1066,21 +940,18 @@ document.querySelectorAll('a,button,input,select,textarea,label,.rsvp-radio,.her
 });
 
 /* ════════════════════════════════════════════════════════════
-   STAR CANVAS (hero constellation)
+   STAR CANVAS
 ════════════════════════════════════════════════════════════ */
 (function(){
   const canvas = document.getElementById('starCanvas');
   const ctx    = canvas.getContext('2d');
   let stars=[], W, H;
-
   function resize(){
     W=canvas.width=canvas.offsetWidth;
     H=canvas.height=canvas.offsetHeight;
   }
-  window.addEventListener('resize',()=>{resize();});
+  window.addEventListener('resize', resize);
   resize();
-
-  // Generate stars
   for(let i=0;i<180;i++){
     stars.push({
       x:Math.random(),y:Math.random(),
@@ -1090,7 +961,6 @@ document.querySelectorAll('a,button,input,select,textarea,label,.rsvp-radio,.her
       phase:Math.random()*Math.PI*2
     });
   }
-
   let t=0;
   function draw(){
     ctx.clearRect(0,0,W,H);
@@ -1108,7 +978,16 @@ document.querySelectorAll('a,button,input,select,textarea,label,.rsvp-radio,.her
 })();
 
 /* ════════════════════════════════════════════════════════════
-   SPLASH SEQUENCE
+   SPLASH SEQUENCE — FIXED
+   
+   Core changes:
+   1. Single #bloom element (was duplicated in HTML).
+   2. Opacity driven by inline style + CSS transition, NOT by
+      swapping animation classes. This removes the 1-frame
+      opacity:0 flash that occurred when 'expand' was removed
+      before 'fade' could take effect.
+   3. Added video 'error' event + 5 s fallback timeout so the
+      splash always dismisses even if the video file is missing.
 ════════════════════════════════════════════════════════════ */
 const video        = document.getElementById('envVideo');
 const loader       = document.getElementById('loader');
@@ -1117,110 +996,122 @@ const splash       = document.getElementById('splash');
 const mainSite     = document.getElementById('mainSite');
 const progressBar  = document.getElementById('progressBar');
 const progressWrap = document.getElementById('progressWrap');
-let fired=false;
 
-function onReady(){
+let fired = false;
+
+// Fallback: if video never loads within 6 s, fire anyway
+const fallbackTimer = setTimeout(() => fire(), 6000);
+
+function onReady() {
+  clearTimeout(fallbackTimer);
   loader.classList.add('hidden');
   video.classList.add('loaded');
   progressWrap.classList.add('visible');
-  requestAnimationFrame(()=>requestAnimationFrame(()=>{
-    progressBar.style.width='100%';
+
+  // Start progress bar animation
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    progressBar.style.width = '100%';
   }));
-  video.play().catch(()=>fire());
+
+  video.play().catch(() => {
+    // Autoplay blocked — skip straight to fire
+    fire();
+  });
 }
 
-function fire(){
-  if(fired)return; fired=true;
+function fire() {
+  if (fired) return;
+  fired = true;
+  clearTimeout(fallbackTimer);
+
   progressWrap.classList.add('hide');
   video.classList.add('zooming');
-  setTimeout(()=>{ bloom.classList.add('expand'); }, 300);
-  setTimeout(()=>{
-    bloom.classList.remove('expand');
-    bloom.classList.add('fade');
-    mainSite.style.opacity='1';
-  }, 900);
-  setTimeout(()=>{ splash.classList.add('gone'); }, 1600);
+
+  // ── Step 1: fade bloom IN (cover screen) ──────────────────
+  // Small delay so the zoom animation has started visually
+  setTimeout(() => {
+    bloom.classList.add('active');   // enable pointer-events
+    bloom.style.transition = 'opacity 0.55s ease-in-out';
+    bloom.style.opacity    = '1';
+  }, 280);
+
+  // ── Step 2: reveal mainSite, then fade bloom OUT ──────────
+  // Wait for bloom to fully cover (280 + 550 = 830 ms)
+  setTimeout(() => {
+    mainSite.style.opacity = '1';          // site is visible under bloom
+    bloom.style.transition  = 'opacity 0.85s ease-in-out';
+    bloom.style.opacity     = '0';         // bloom fades away → site revealed
+    setTimeout(() => {
+      bloom.classList.remove('active');    // restore pointer-events:none
+    }, 850);
+  }, 830);
+
+  // ── Step 3: fully remove splash from DOM flow ─────────────
+  // Wait until bloom has finished fading out (830 + 850 = 1680 ms)
+  setTimeout(() => {
+    splash.classList.add('gone');
+  }, 1680);
 }
 
-video.addEventListener('canplaythrough', onReady, {once:true});
-video.addEventListener('ended', fire, {once:true});
-video.addEventListener('timeupdate',()=>{ if(video.currentTime>=3.95) fire(); });
+// Bind video events
+video.addEventListener('canplaythrough', onReady, { once: true });
+video.addEventListener('ended',          fire,    { once: true });
+video.addEventListener('error',          fire,    { once: true });
+
+// Also fire if video reaches near the end (e.g. short clip)
+video.addEventListener('timeupdate', () => {
+  if (video.currentTime >= 3.95) fire();
+});
+
 video.load();
 
 /* ════════════════════════════════════════════════════════════
-   SCROLL REVEAL (IntersectionObserver)
+   SCROLL REVEAL
 ════════════════════════════════════════════════════════════ */
-const io = new IntersectionObserver((entries)=>{
-  entries.forEach(e=>{
-    if(e.isIntersecting) e.target.classList.add('in');
+const io = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) e.target.classList.add('in');
   });
-},{threshold:0.12});
+}, { threshold: 0.12 });
 
-document.querySelectorAll('.reveal,.reveal-left,.reveal-right').forEach(el=>io.observe(el));
+document.querySelectorAll('.reveal,.reveal-left,.reveal-right').forEach(el => io.observe(el));
 
 /* ════════════════════════════════════════════════════════════
-   LIVE COUNTDOWN  (4 April 2026, 18:00 PKT = UTC+5)
+   LIVE COUNTDOWN  (4 April 2026, 19:00 PKT = UTC+5)
 ════════════════════════════════════════════════════════════ */
-const TARGET = new Date('2026-04-04T18:00:00+05:00').getTime();
+const TARGET = new Date('2026-04-04T19:00:00+05:00').getTime();
 
-function pad(n,d=2){ return String(n).padStart(d,'0'); }
+function pad(n, d=2) { return String(n).padStart(d, '0'); }
 
-function tick(){
-  const now  = Date.now();
-  const diff = TARGET - now;
-  if(diff<=0){
-    document.getElementById('cd-days').textContent='000';
-    document.getElementById('cd-hours').textContent='00';
-    document.getElementById('cd-mins').textContent='00';
-    document.getElementById('cd-secs').textContent='00';
+function tick() {
+  const diff = TARGET - Date.now();
+  if (diff <= 0) {
+    document.getElementById('cd-days').textContent  = '000';
+    document.getElementById('cd-hours').textContent = '00';
+    document.getElementById('cd-mins').textContent  = '00';
+    document.getElementById('cd-secs').textContent  = '00';
     return;
   }
-  const days  = Math.floor(diff/86400000);
-  const hours = Math.floor((diff%86400000)/3600000);
-  const mins  = Math.floor((diff%3600000)/60000);
-  const secs  = Math.floor((diff%60000)/1000);
-  document.getElementById('cd-days').textContent  = pad(days,3);
-  document.getElementById('cd-hours').textContent = pad(hours);
-  document.getElementById('cd-mins').textContent  = pad(mins);
-  document.getElementById('cd-secs').textContent  = pad(secs);
+  document.getElementById('cd-days').textContent  = pad(Math.floor(diff / 86400000), 3);
+  document.getElementById('cd-hours').textContent = pad(Math.floor((diff % 86400000) / 3600000));
+  document.getElementById('cd-mins').textContent  = pad(Math.floor((diff % 3600000)  / 60000));
+  document.getElementById('cd-secs').textContent  = pad(Math.floor((diff % 60000)    / 1000));
 }
-tick(); setInterval(tick,1000);
-// This ensures the page is fully loaded before trying to find the music
-  document.addEventListener('DOMContentLoaded', () => {
-      const bgMusic = document.getElementById('bgMusic');
-      
-      // Force volume to 100% just in case
-      bgMusic.volume = 1.0; 
+tick();
+setInterval(tick, 1000);
 
-      // Listen for the first tap anywhere on the body
-      document.body.addEventListener('click', function() {
-          if (bgMusic.paused) {
-              // The .catch logs any errors to your developer console
-              bgMusic.play().catch(error => {
-                  console.log("Audio blocked or missing:", error);
-              });
-          }
-      }, { once: true });
-  });
 /* ════════════════════════════════════════════════════════════
-   RSVP FORM
+   BACKGROUND MUSIC — play on first interaction
 ════════════════════════════════════════════════════════════ */
-function handleRSVP(e){
-  e.preventDefault();
-  document.getElementById('rsvpForm').style.display='none';
-  const s=document.getElementById('rsvpSuccess');
-  s.style.display='block';
-  setTimeout(()=>s.classList.add('in'),50);
-}
-
-
+document.addEventListener('DOMContentLoaded', () => {
+  const bgMusic = document.getElementById('bgMusic');
+  bgMusic.volume = 1.0;
+  document.body.addEventListener('click', function () {
+    if (bgMusic.paused) {
+      bgMusic.play().catch(err => console.log('Audio blocked:', err));
+    }
+  }, { once: true });
+});
 </script>
 </body>
 </html>
-
-
-
-
-
-
-
