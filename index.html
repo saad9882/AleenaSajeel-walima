@@ -162,43 +162,115 @@ section{
   color:var(--gold-light);
 }
 
-  /* ── SPLASH ── */
-    #splash {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100vw;
-      height: 100vh;
-      z-index: 9999;
-      background: #000;
-      overflow: hidden;
-      transition: opacity 1s ease, visibility 1s ease;
-    }
-    #splash.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+/* ═══════════════════════════════════════════════════════════════
+   1. SPLASH SCREEN  — FIXED
+═══════════════════════════════════════════════════════════════ */
+#splash{
+  position:fixed;inset:0;
+  z-index:9000;
+  background:#000;
+  /* NO transition — bloom handles the smooth wipe.
+     Splash must vanish instantly; its black bg was
+     appearing as a second fading screen after bloom. */
+}
+#splash.gone{
+  display:none;       /* instant kill — no fade, no ghost */
+  pointer-events:none;
+}
 
-    #splash video {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      width: 100vw;
-      height: 100vh;
-      min-width: 100vw;
-      min-height: 100vh;
-      transform: translate(-50%, -50%);
-      object-fit: cover;
-      object-position: center center;
-      -webkit-transform: translate(-50%, -50%);
-    }
+#envVideo{
+  position:absolute;inset:0;
+  width:100%;height:100%;
+  object-fit:cover;object-position:center;
+  display:block;
+  opacity:0;
+  transition:opacity 0.5s ease;
+}
+#envVideo.loaded{opacity:1;}
+#envVideo.zooming{
+  transform-origin:center;
+  animation:vidZoom 0.75s var(--ease-bloom) forwards;
+}
+@keyframes vidZoom{from{transform:scale(1);}to{transform:scale(1.07);}}
 
-    @supports (-webkit-touch-callout: none) {
-      /* iOS Safari specific */
-      #splash {
-        height: -webkit-fill-available;
-      }
-      #splash video {
-        height: -webkit-fill-available;
-        min-height: -webkit-fill-available;
-      }
-    }
+.splash-vignette{
+  position:absolute;inset:0;
+  background:radial-gradient(ellipse 80% 80% at 50% 50%,transparent 38%,rgba(0,0,0,0.6) 100%);
+  pointer-events:none;z-index:2;
+}
+.splash-frame{
+  position:absolute;inset:24px;
+  border:1px solid rgba(201,168,76,0.2);
+  pointer-events:none;z-index:5;
+  opacity:0;animation:fadeIn 1.2s ease 0.6s both;
+}
+@keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+
+/* ── BLOOM OVERLAY — FIXED ──────────────────────────────────
+   Single element. No animation classes — we drive opacity
+   purely via JS + CSS transition so there is no class-swap
+   flash. The transition handles both fade-in and fade-out.
+─────────────────────────────────────────────────────────── */
+#bloom {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  pointer-events: none;
+  opacity: 0;
+  background-color: #0a1930;
+  /* One transition covers both directions */
+  transition: opacity 0.6s ease-in-out;
+}
+/* When JS sets opacity=1 we want it to block clicks */
+#bloom.active {
+  pointer-events: all;
+}
+
+/* Splash corners */
+.sp-corner{
+  position:absolute;width:clamp(28px,4vw,50px);height:clamp(28px,4vw,50px);
+  z-index:5;opacity:0;animation:fadeIn 1s ease 0.4s both;
+}
+.sp-corner svg{width:100%;height:100%;}
+.sp-corner--tl{top:28px;left:28px;}
+.sp-corner--tr{top:28px;right:28px;transform:scaleX(-1);}
+.sp-corner--bl{bottom:28px;left:28px;transform:scaleY(-1);}
+.sp-corner--br{bottom:28px;right:28px;transform:scale(-1);}
+
+/* Loader */
+#loader{
+  position:absolute;inset:0;z-index:20;
+  display:flex;align-items:center;justify-content:center;
+  background:var(--ink);transition:opacity 0.6s ease;
+}
+#loader.hidden{opacity:0;pointer-events:none;}
+.loader-ring{
+  width:44px;height:44px;
+  border:1.5px solid rgba(201,168,76,0.18);
+  border-top-color:var(--gold);
+  border-radius:50%;animation:spin 1s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* Progress bar */
+#progressWrap{
+  position:absolute;bottom:clamp(28px,4vh,52px);
+  left:50%;transform:translateX(-50%);
+  z-index:10;display:flex;flex-direction:column;
+  align-items:center;gap:10px;
+  opacity:0;transition:opacity 0.5s ease;white-space:nowrap;
+}
+#progressWrap.visible{opacity:1;}
+#progressWrap.hide{opacity:0;transition:opacity 0.4s ease;}
+.progress-label{
+  font-family:'Cinzel',serif;font-size:clamp(8px,1vw,10px);
+  letter-spacing:0.42em;color:rgba(201,168,76,0.45);text-transform:uppercase;
+}
+.progress-track{
+  width:clamp(80px,14vw,140px);height:1px;
+  background:rgba(201,168,76,0.12);border-radius:1px;overflow:hidden;
+}
+#progressBar{height:100%;width:0%;background:linear-gradient(90deg,transparent,var(--gold));transition:width 3s linear;}
 
 /* ═══════════════════════════════════════════════════════════════
    2. HERO
@@ -660,13 +732,13 @@ footer::before{
     <div class="story-card reveal-left d2">
       <p class="story-card-label">The Groom</p>
       <p class="story-card-name">Sajeel<br/>Wasti</p>
-      <p class="story-card-sub">Son of Aliya and Mohsin Wasti<br/>Beloved, honoured, cherished.</p>
+      <p class="story-card-sub">Son of Aliya and Mohsin Wasti,<br/>beloved, honoured, cherished.</p>
     </div>
     <div class="story-vline reveal d3"></div>
     <div class="story-card reveal-right d2">
       <p class="story-card-label">The Bride</p>
       <p class="story-card-name">Aleena<br/>Ammad</p>
-      <p class="story-card-sub">Daughter of Asmara and Ammad Hussain<br/>Graceful, radiant, treasured.</p>
+      <p class="story-card-sub">Daughter of Asmara and Ammad Hussain,<br/>graceful, radiant, treasured.</p>
     </div>
   </div>
 
@@ -905,45 +977,102 @@ document.querySelectorAll('a,button,input,select,textarea,label,.rsvp-radio,.her
   draw();
 })();
 
-// ── SPLASH: play only first 3 seconds ──
-    const splashVideo = document.getElementById('splashVideo');
-    const splash = document.getElementById('splash');
+/* ════════════════════════════════════════════════════════════
+   SPLASH SEQUENCE — FIXED
+   
+   Core changes:
+   1. Single #bloom element (was duplicated in HTML).
+   2. Opacity driven by inline style + CSS transition, NOT by
+      swapping animation classes. This removes the 1-frame
+      opacity:0 flash that occurred when 'expand' was removed
+      before 'fade' could take effect.
+   3. Added video 'error' event + 5 s fallback timeout so the
+      splash always dismisses even if the video file is missing.
+════════════════════════════════════════════════════════════ */
+const video        = document.getElementById('envVideo');
+const loader       = document.getElementById('loader');
+const bloom        = document.getElementById('bloom');
+const splash       = document.getElementById('splash');
+const mainSite     = document.getElementById('mainSite');
+const progressBar  = document.getElementById('progressBar');
+const progressWrap = document.getElementById('progressWrap');
 
-    // iOS requires these attributes to be set via JS too
-    splashVideo.setAttribute('playsinline', '');
-    splashVideo.setAttribute('muted', '');
-    splashVideo.muted = true;
-    splashVideo.playbackRate = 1.3;
+let fired = false;
 
-    function hideSplash() {
-      splashVideo.pause();
-      splash.classList.add('hidden');
-      tryPlayMusic();
-    }
+// Fallback: if video never loads within 6 s, fire anyway
+const fallbackTimer = setTimeout(() => fire(), 6000);
 
-    splashVideo.addEventListener('timeupdate', () => {
-      if (splashVideo.currentTime >= 3) hideSplash();
-    });
+function onReady() {
+  clearTimeout(fallbackTimer);
+  loader.classList.add('hidden');
+  video.classList.add('loaded');
+  progressWrap.classList.add('visible');
 
-    // Try to play — on iOS may need a tap first
-    const playPromise = splashVideo.play();
-    if (playPromise !== undefined) {
-      playPromise.catch(() => {
-        // iOS blocked autoplay — show a tap-to-start overlay
-        splash.style.cursor = 'pointer';
-        splash.addEventListener('click', () => {
-          splashVideo.play();
-        }, { once: true });
-      });
-    }
+  // Start progress bar animation
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    progressBar.style.width = '100%';
+  }));
 
-    // Fallback: if video errors or stalls, skip after 5s
-    splashVideo.addEventListener('error', () => {
-      setTimeout(hideSplash, 800);
-    });
-    setTimeout(() => {
-      if (!splash.classList.contains('hidden')) hideSplash();
-    }, 5000);
+  video.play().catch(() => {
+    // Autoplay blocked — skip straight to fire
+    fire();
+  });
+}
+
+function fire() {
+  if (fired) return;
+  fired = true;
+  clearTimeout(fallbackTimer);
+
+  progressWrap.classList.add('hide');
+  video.classList.add('zooming');
+
+  // ── Step 1: Fade bloom IN to fully cover the screen ───────
+  bloom.style.pointerEvents = 'all';
+  bloom.style.transition    = 'opacity 0.5s ease-in-out';
+  bloom.style.opacity       = '1';
+
+  // ── Step 2: Once bloom is FULLY opaque (500 ms + 20 buffer)
+  //    snap mainSite to visible instantly behind it, then
+  //    fade bloom OUT to reveal the already-painted site.
+  setTimeout(() => {
+    // Kill mainSite's slow 1.4 s transition — snap it visible
+    // while safely hidden behind the opaque bloom.
+    mainSite.style.transition = 'none';
+    mainSite.style.opacity    = '1';
+
+    // Two rAFs ensure the opacity:1 paint is committed before
+    // we start moving bloom in the other direction.
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      bloom.style.transition = 'opacity 0.8s ease-in-out';
+      bloom.style.opacity    = '0';
+    }));
+  }, 520);
+
+  // ── Step 3: After bloom finishes fading out, kill BOTH
+  //    bloom and the entire splash instantly — no second fade.
+  //    520 ms (fade-in) + 800 ms (fade-out) + 80 ms buffer = 1400 ms
+  setTimeout(() => {
+    bloom.style.display    = 'none';   // bloom is gone
+    bloom.style.pointerEvents = 'none';
+    // Snap splash off — its black background must NOT fade;
+    // that was producing the "second screen" the user saw.
+    splash.style.transition = 'none';
+    splash.classList.add('gone');      // display:none via CSS
+  }, 1400);
+}
+
+// Bind video events
+video.addEventListener('canplaythrough', onReady, { once: true });
+video.addEventListener('ended',          fire,    { once: true });
+video.addEventListener('error',          fire,    { once: true });
+
+// Also fire if video reaches near the end (e.g. short clip)
+video.addEventListener('timeupdate', () => {
+  if (video.currentTime >= 3.95) fire();
+});
+
+video.load();
 
 /* ════════════════════════════════════════════════════════════
    SCROLL REVEAL
@@ -995,4 +1124,3 @@ document.addEventListener('DOMContentLoaded', () => {
 </script>
 </body>
 </html>
-
