@@ -169,12 +169,12 @@ section{
   position:fixed;inset:0;
   z-index:9000;
   background:#000;
-  /* FIX: use visibility + opacity together so it truly disappears */
-  transition:opacity 0.7s var(--ease-lux), visibility 0.7s var(--ease-lux);
+  /* NO transition — bloom handles the smooth wipe.
+     Splash must vanish instantly; its black bg was
+     appearing as a second fading screen after bloom. */
 }
 #splash.gone{
-  opacity:0;
-  visibility:hidden;
+  display:none;       /* instant kill — no fade, no ghost */
   pointer-events:none;
 }
 
@@ -219,7 +219,7 @@ section{
   opacity: 0;
   background-color: #0a1930;
   /* One transition covers both directions */
-  transition: opacity 0.2s ease-in-out;
+  transition: opacity 0.6s ease-in-out;
 }
 /* When JS sets opacity=1 we want it to block clicks */
 #bloom.active {
@@ -1027,36 +1027,39 @@ function fire() {
   progressWrap.classList.add('hide');
   video.classList.add('zooming');
 
-  // ── Step 1: Fade bloom IN to cover the entire screen ──────
+  // ── Step 1: Fade bloom IN to fully cover the screen ───────
   bloom.style.pointerEvents = 'all';
   bloom.style.transition    = 'opacity 0.5s ease-in-out';
   bloom.style.opacity       = '1';
 
-  // ── Step 2: Once bloom is FULLY opaque (500 ms), snap      
-  //    mainSite to opacity:1 instantly beneath it, then fade  
-  //    bloom OUT — revealing the already-visible site.        
+  // ── Step 2: Once bloom is FULLY opaque (500 ms + 20 buffer)
+  //    snap mainSite to visible instantly behind it, then
+  //    fade bloom OUT to reveal the already-painted site.
   setTimeout(() => {
-    // Remove the slow 1.4 s transition and snap site visible  
-    // while it is safely hidden behind the opaque bloom.      
+    // Kill mainSite's slow 1.4 s transition — snap it visible
+    // while safely hidden behind the opaque bloom.
     mainSite.style.transition = 'none';
     mainSite.style.opacity    = '1';
 
-    // Double rAF ensures the opacity:1 paint is committed      
-    // before we start fading bloom away.                       
+    // Two rAFs ensure the opacity:1 paint is committed before
+    // we start moving bloom in the other direction.
     requestAnimationFrame(() => requestAnimationFrame(() => {
-      bloom.style.transition = 'opacity 0.9s ease-in-out';
+      bloom.style.transition = 'opacity 0.8s ease-in-out';
       bloom.style.opacity    = '0';
     }));
-  }, 520); // 20 ms buffer past the 500 ms fade-in
+  }, 520);
 
-  // ── Step 3: After bloom finishes fading out, kill it dead   
-  //    and remove the splash overlay entirely.                 
-  // 520 + 900 (fade-out) + 80 (buffer) = 1500 ms
+  // ── Step 3: After bloom finishes fading out, kill BOTH
+  //    bloom and the entire splash instantly — no second fade.
+  //    520 ms (fade-in) + 800 ms (fade-out) + 80 ms buffer = 1400 ms
   setTimeout(() => {
-    bloom.style.display    = 'none';      // guarantee it is gone
+    bloom.style.display    = 'none';   // bloom is gone
     bloom.style.pointerEvents = 'none';
-    splash.classList.add('gone');
-  }, 1500);
+    // Snap splash off — its black background must NOT fade;
+    // that was producing the "second screen" the user saw.
+    splash.style.transition = 'none';
+    splash.classList.add('gone');      // display:none via CSS
+  }, 1400);
 }
 
 // Bind video events
@@ -1121,5 +1124,3 @@ document.addEventListener('DOMContentLoaded', () => {
 </script>
 </body>
 </html>
-
-
